@@ -10,6 +10,19 @@ function generateRandomString() {
   console.log(" string:___", randomNumber);
   return randomNumber;
 }
+const getuserEmail = (email, database) => {
+  for (let keyID in database) {
+    if (database[keyID].email === email) return database[keyID];
+  }
+  return null;
+};
+const getuserbyId = (id, database) => {
+  for (let keyID in database) {
+    if (keyID === id) return database[keyID];
+  }
+  return null;
+};
+
 const users = {
   userRandomID: {
     id: "userRandomID",
@@ -83,17 +96,35 @@ app.get("/register", (req, res) => {
   };
   res.render("register", templateVars);
 });
+app.get("/login", (req, res) => {
+  console.log("req.headers.cookie", req.headers.cookie);
+  if (req.headers.cookie?.split("=")[1]) {
+    res.redirect("/urls");
+  } else {
+    const templateVars = {
+      user: getuserbyId(req.headers.cookie?.split("=")[1], users)
+    };
+    res.render("login", templateVars);
+  }
+});
 app.post("/register", (req, res) => {
-  const userid = generateRandomString();
-  users[userid] = {
-    id: userid,
-    email: req.body.email,
-    password: req.body.password
-  };
-  res.cookie('userid', userid);
-  console.log("New User Name Being Added: ", users[userid]);
-  res.redirect(`/urls`);
-
+  if (req.body.email === "" || req.body.password === "") {
+    res.sendStatus(400);
+  }
+  //  if email already exists
+  if (getuserEmail(req.body.email, users)) {
+    res.sendStatus(400);
+  } else {
+    const userid = generateRandomString();
+    users[userid] = {
+      id: userid,
+      email: req.body.email,
+      password: req.body.password
+    };
+    res.cookie('userid', userid);
+    console.log("New User Name Being Added: ", users[userid]);
+    res.redirect(`/urls`);
+  }
 });
 
 
@@ -118,13 +149,28 @@ app.post("/urls/:id/edit", (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 });
 app.post("/login", (req, res) => {
-  const username = req.body.username;
-  res.cookie("username", username);
+  if (req.body.email === "" || req.body.password === "") {
+    res.sendStatus(400);
+  }
+  //  if email already exists
+  const userid = getuserEmail(req.body.email, users);
+  if (!userid) {
+    res.sendStatus(403);
+  } else {
+    if ((userid.email === req.body.email) && (userid.password === req.body.password)) {
+      res.cookie('userid', userid);
+    }
+    else {
+      res.sendStatus(403);
+    }
+    //console.log("New User Name Being Added: ", users[userid]);
+    res.redirect(`/urls`);
+  }
   res.redirect(`/urls/`);
 });
 app.post("/logout", (req, res) => {
-  res.clearCookie('username');
-  res.redirect(`/urls/`);
+  res.clearCookie('userid');
+  res.redirect(`/login`);
 });
 
 
