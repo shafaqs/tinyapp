@@ -1,8 +1,11 @@
 const express = require("express");
 const bodyParser = require('body-parser');
+const cookieSession = require('cookie-session');
 const cookieParser = require('cookie-parser');
+const bcrypt = require("bcryptjs");
 const app = express();
 const PORT = 8080; // default port 8080
+app.use(bodyParser.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 
 function generateRandomString() {
@@ -112,8 +115,10 @@ app.get("/u/:id", (req, res) => {
   res.redirect(longURL);
 });
 
+
 app.get("/register", (req, res) => {
   const userid = req.cookies["userid"];
+
   if (userid) {
     res.redirect("/urls");
   }
@@ -124,6 +129,7 @@ app.get("/register", (req, res) => {
 });
 // if user is logged in redirect to get urls
 app.get("/login", (req, res) => {
+
   const userid = req.cookies["userid"];
   if (userid) {
     res.redirect("/urls");
@@ -135,6 +141,13 @@ app.get("/login", (req, res) => {
 });
 
 app.post("/register", (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+  const salt = bcrypt.genSaltSync(10);
+  const hash = bcrypt.hashSync(password, salt);
+
+
+
   if (req.body.email === "" || req.body.password === "") {
     res.sendStatus(400);
   }
@@ -146,8 +159,9 @@ app.post("/register", (req, res) => {
     users[userid] = {
       id: userid,
       email: req.body.email,
-      password: req.body.password
+      password: bcrypt.hashSync(req.body.password, salt)
     };
+    console.log(users);
     res.cookie('userid', userid);
     console.log("New User Name Being Added: ", users[userid]);
     res.redirect(`/urls`);
@@ -191,7 +205,7 @@ app.post("/login", (req, res) => {
   if (!user) {
     res.sendStatus(403);
   } else {
-    if ((user.email === req.body.email) && (user.password === req.body.password)) {
+    if ((user.email === req.body.email) && bcrypt.compareSync(req.body.password, user.password)) {
       res.cookie('userid', user.id);
     }
     else {
