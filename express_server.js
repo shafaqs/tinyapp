@@ -31,29 +31,9 @@ const urlsForUser = (id, urlDatabase) => {
   return userurls;
 };
 
-const users = {
-  userRandomID: {
-    id: "userRandomID",
-    email: "shaf@gmail.com",
-    password: "1",
-  },
-  user2RandomID: {
-    id: "user2RandomID",
-    email: "user2@example.com",
-    password: "1",
-  },
-};
+const users = {};
+const urlDatabase = {};
 
-const urlDatabase = {
-  b6UTxQ: {
-    longURL: "https://www.tsn.ca",
-    userID: "aJ48lW",
-  },
-  i3BoGr: {
-    longURL: "https://www.google.ca",
-    userID: "aJ48lW",
-  },
-};
 
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -202,14 +182,13 @@ app.post("/login", (req, res) => {
     res.sendStatus(403);
   } else {
     if ((user.email === req.body.email) && bcrypt.compareSync(req.body.password, user.password)) {
-      res.cookie('userid', user.id);
+      req.session.userid = user.id;
+      res.redirect(`/urls`);
     }
     else {
       res.sendStatus(403);
     }
-    res.redirect(`/urls`);
   }
-  res.redirect(`/urls/`);
 });
 app.post("/logout", (req, res) => {
   req.session.userid = null;
