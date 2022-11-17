@@ -42,8 +42,21 @@ app.use(cookieSession({
   keys: ["unbreakable"]
 }));
 
+// Render the Root page
+app.get("/", (req, res) => {
+  const userid = req.session.userid;
+  if (userid) {
+    console.log("Root, logged in user, redirecting to /urls");
+    req.session.userid = userid;
+    res.redirect(`/urls`);
+  } else {
+    console.log("Root, user not logged in, redirecting to /login");
 
+    res.redirect(`/login`);
+  }
+});
 
+// Render the urls page
 app.get("/urls", (req, res) => {
   // create a check to let only register users access data
   const userid = req.session.userid;
@@ -91,10 +104,12 @@ app.get("/urls/:id", (req, res) => {
 app.get("/u/:id", (req, res) => {
   const id = req.params.id;
   const longURL = urlDatabase[id].longURL;
+  console.log("We are in /u/:id");
   if (!longURL) {
     res.send("id is not in the database");
+  } else {
+    res.redirect(longURL);
   }
-  res.redirect(longURL);
 });
 
 
@@ -131,11 +146,11 @@ app.post("/register", (req, res) => {
 
 
   if (req.body.email === "" || req.body.password === "") {
-    res.sendStatus(400);
+    res.status(400).send('Enter valid email and password');
   }
   //  if email already exists
   if (getUserByEmail(req.body.email, users)) {
-    res.sendStatus(400);
+    res.status(400).send('Enter a different email and password');
   } else {
     const userid = generateRandomString();
     users[userid] = {
@@ -186,7 +201,7 @@ app.post("/login", (req, res) => {
       res.redirect(`/urls`);
     }
     else {
-      res.sendStatus(403);
+      res.status(403).send('invalid email or password');
     }
   }
 });
