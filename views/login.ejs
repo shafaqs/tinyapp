@@ -13,16 +13,19 @@
 </head>
 
 <body>
-  <%- include('partials/_header') %>
+  <%- include('partials/_header', { user: user }) %>
     <main style="margin: 1em;">
       <div>
         <h3>Login</h3>
       </div>
-      <form method="POST" action="/login">
-        <input type="text" id="name" name="email" placeholder="Email" />
-        <input type="password" id="password" name="password" placeholder="password" />
-        <button type="submit">Login</button>
-      </form>
+      <% if (message) { %>
+        <%= message %>
+          <% } %>
+            <form method="POST" action="/login">
+              <input type="text" id="name" name="email" placeholder="Email" />
+              <input type="password" id="password" name="password" placeholder="password" />
+              <button type="submit">Login</button>
+            </form>
     </main>
     <!-- Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"

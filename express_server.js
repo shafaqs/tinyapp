@@ -78,11 +78,12 @@ app.get("/urls/new", (req, res) => {
   if (!userid) {
     res.send("login or register to shorten URL");
     res.redirect("/login");
+  } else {
+    const templateVars = {
+      user: users[userid],
+    };
+    res.render("urls_new", templateVars);
   }
-  const templateVars = {
-    user: users[userid],
-  };
-  res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:id", (req, res) => {
@@ -103,7 +104,14 @@ app.get("/urls/:id", (req, res) => {
 
 app.get("/u/:id", (req, res) => {
   const id = req.params.id;
-  const longURL = urlDatabase[id].longURL;
+  const url = urlDatabase[id];
+
+  if (!url) {
+    res.redirect('/');
+    return;
+  }
+
+  longURL = url.longURL;
   console.log("We are in /u/:id");
   if (!longURL) {
     res.send("id is not in the database");
@@ -132,6 +140,7 @@ app.get("/login", (req, res) => {
     res.redirect("/urls");
   }
   const templateVars = {
+    message: null,
     user: getuserbyId(userid, users)
   };
   res.render("login", templateVars);
@@ -201,7 +210,8 @@ app.post("/login", (req, res) => {
       res.redirect(`/urls`);
     }
     else {
-      res.status(403).send('invalid email or password');
+      //res.status(403).send('invalid email or password');
+      res.render("login", { message: 'invalid email or password', user: null });
     }
   }
 });
