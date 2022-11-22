@@ -46,11 +46,9 @@ app.use(cookieSession({
 app.get("/", (req, res) => {
   const userid = req.session.userid;
   if (userid) {
-    console.log("Root, logged in user, redirecting to /urls");
     req.session.userid = userid;
     res.redirect(`/urls`);
   } else {
-    console.log("Root, user not logged in, redirecting to /login");
 
     res.redirect(`/login`);
   }
@@ -76,7 +74,6 @@ app.get("/urls/new", (req, res) => {
   // create a function for register users to access features
   const userid = req.session.userid;
   if (!userid) {
-    res.send("login or register to shorten URL");
     res.redirect("/login");
   } else {
     const templateVars = {
@@ -93,13 +90,20 @@ app.get("/urls/:id", (req, res) => {
     res.send("This page isn't availabe");
   }
   const id = req.params.id;
-  const longURL = urlDatabase[id].longURL;
-  const templateVars = {
-    user: users[userid],
-    id, longURL
-  };
+  if (!urlDatabase[id]) {
+    res.send("URL is not in the database");
+    //res.redirect(`/urls`);
+  } else {
+    const longURL = urlDatabase[id].longURL;
+    const templateVars = {
+      user: users[userid],
+      id, longURL
+    };
 
-  res.render("urls_show", templateVars);
+    res.render("urls_show", templateVars);
+  }
+
+
 });
 
 app.get("/u/:id", (req, res) => {
@@ -112,7 +116,6 @@ app.get("/u/:id", (req, res) => {
   }
 
   longURL = url.longURL;
-  console.log("We are in /u/:id");
   if (!longURL) {
     res.send("id is not in the database");
   } else {
@@ -206,19 +209,18 @@ app.post("/urls/:id", (req, res) => {
 });
 app.post("/login", (req, res) => {
   if (req.body.email === "" || req.body.password === "") {
-    res.sendStatus(400);
+    return res.status(401).send("Enter a valid email and password");
   }
   //  if email already exists
   const user = getUserByEmail(req.body.email, users);
   if (!user) {
-    res.sendStatus(403);
+    res.status(401).send("Use a different email");
   } else {
     if ((user.email === req.body.email) && bcrypt.compareSync(req.body.password, user.password)) {
       req.session.userid = user.id;
       res.redirect(`/urls`);
     }
     else {
-      //res.status(403).send('invalid email or password');
       res.render("login", { message: 'invalid email or password', user: null });
     }
   }
